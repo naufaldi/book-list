@@ -22,7 +22,7 @@ const BookCard: React.FC<BookCardProps> = ({
   };
   const formattedDate = formatDate(book.publicationDate);
   return (
-    <div className="book-card">
+    <div className="book-card card">
       <div className="book-card__img">
         <img src={book.cover} alt={book.title} onError={handleError} />
       </div>
@@ -31,7 +31,10 @@ const BookCard: React.FC<BookCardProps> = ({
       <p className="book-card__description">{book.description}</p>
       <div className="book-card__footer">
         <p className="book-card__date">{formattedDate}</p>
-        <Button onClick={() => toggleFavorite(book.id)}>
+        <Button
+          className="button--primary"
+          onClick={() => toggleFavorite(book.id)}
+        >
           <span className="icon">{isFavorite ? '❤️' : '♡'}</span>
         </Button>
       </div>
