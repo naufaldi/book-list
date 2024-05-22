@@ -17,6 +17,7 @@ const BookList: React.FC = () => {
   const [localBooks, setLocalBooks] = useState<Book[]>([]);
   const [editBook, setEditBook] = useState<Book | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const BOOKS_PERPAGE = 5;
 
@@ -26,7 +27,7 @@ const BookList: React.FC = () => {
     error,
   } = useQuery({
     queryKey: ['book-list'],
-    queryFn: () => fetchBooks(),
+    queryFn: fetchBooks,
   });
 
   // Initialize favorites from localStorage
@@ -34,8 +35,11 @@ const BookList: React.FC = () => {
     const storedFavorites = localStorage.getItem('favorites');
     if (storedFavorites) {
       setFavorites(JSON.parse(storedFavorites));
+      console.log("Loaded favorites from localStorage");
+    } else {
+      localStorage.setItem('favorites', JSON.stringify([]));
+      console.log("Initialized favorites in localStorage");
     }
-    console.log('use effect work storedFavorites');
   }, []);
 
   // Callback to initialize books from localStorage or API
@@ -50,10 +54,13 @@ const BookList: React.FC = () => {
         ),
       ];
       setLocalBooks(combinedBooks);
+      console.log("Loaded books from localStorage and API");
     } else {
       setLocalBooks(apiBooks);
       localStorage.setItem('localBooks', JSON.stringify(apiBooks));
+      console.log("Initialized books in localStorage from API");
     }
+    setIsInitialized(true);
   }, [apiBooks]);
 
   // Initialize books only when apiBooks has data
@@ -66,13 +73,19 @@ const BookList: React.FC = () => {
 
   // Update localStorage when favorites change
   useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }, [favorites]);
+    if (isInitialized) {
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      console.log("Updated favorites in localStorage");
+    }
+  }, [favorites, isInitialized]);
 
   // Update localStorage when localBooks change
   useEffect(() => {
-    localStorage.setItem('localBooks', JSON.stringify(localBooks));
-  }, [localBooks]);
+    if (isInitialized) {
+      localStorage.setItem('localBooks', JSON.stringify(localBooks));
+      console.log("Updated localBooks in localStorage");
+    }
+  }, [localBooks, isInitialized]);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error loading books</div>;
@@ -94,67 +107,33 @@ const BookList: React.FC = () => {
     setEditBook(null);
     setIsModalOpen(false);
   };
+
   const handleCardClick = (id: number) => {
     navigate(`/book/${id}`);
   };
+
   const handleSaveBook = (inputBook: InputBook) => {
-    if (
-      inputBook.cover &&
-      inputBook.cover instanceof FileList &&
-      inputBook.cover.length > 0
-    ) {
-      const file = inputBook.cover[0];
-      const reader = new FileReader();
+    const id = editBook
+      ? editBook.id
+      : Math.max(...localBooks.map((b) => b.id), 0) + 1;
 
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        const id = editBook
-          ? editBook.id
-          : Math.max(...localBooks.map((b) => b.id), 0) + 1;
+    const book: Book = {
+      id,
+      title: inputBook.title,
+      author: inputBook.author,
+      description: inputBook.description,
+      cover: inputBook.cover as string,
+      publicationDate: inputBook.publicationDate,
+    };
 
-        const book: Book = {
-          id,
-          title: inputBook.title,
-          author: inputBook.author,
-          description: inputBook.description,
-          cover: base64String,
-          publicationDate: inputBook.publicationDate,
-        };
+    const updatedBooks = editBook
+      ? localBooks.map((b) => (b.id === book.id ? book : b))
+      : [...localBooks, book];
 
-        const updatedBooks = editBook
-          ? localBooks.map((b) => (b.id === book.id ? book : b))
-          : [...localBooks, book];
-
-        setLocalBooks(updatedBooks);
-        closeModal();
-      };
-
-      reader.readAsDataURL(file);
-    } else {
-      const id = editBook
-        ? editBook.id
-        : Math.max(...localBooks.map((b) => b.id), 0) + 1;
-
-      const book: Book = {
-        id,
-        title: inputBook.title,
-        author: inputBook.author,
-        description: inputBook.description,
-        cover:
-          typeof inputBook.cover === 'string'
-            ? inputBook.cover
-            : editBook?.cover || '',
-        publicationDate: inputBook.publicationDate,
-      };
-
-      const updatedBooks = editBook
-        ? localBooks.map((b) => (b.id === book.id ? book : b))
-        : [...localBooks, book];
-
-      setLocalBooks(updatedBooks);
-      closeModal();
-    }
+    setLocalBooks(updatedBooks);
+    closeModal();
   };
+
   const handleDeleteBook = (id: number) => {
     setLocalBooks(localBooks.filter((book) => book.id !== id));
   };
@@ -170,9 +149,9 @@ const BookList: React.FC = () => {
     cover: undefined,
     publicationDate: book.publicationDate,
   });
-  const apiBookIds = apiBooks.map((book) => book.id);
 
   const allBooks = localBooks;
+  const apiBookIds = apiBooks.map((book) => book.id);
   const paginatedBooks = allBooks.slice(
     (currentPage - 1) * BOOKS_PERPAGE,
     currentPage * BOOKS_PERPAGE
@@ -199,10 +178,10 @@ const BookList: React.FC = () => {
             book={book}
             isFavorite={favorites.includes(book.id)}
             toggleFavorite={toggleFavorite}
-            isApiBook={apiBookIds.includes(book.id)}
             onEdit={() => handleEditBook(book)}
             onDelete={() => handleDeleteBook(book.id)}
             onDetail={() => handleCardClick(book.id)}
+            isApiBook={apiBookIds.includes(book.id)}
           />
         ))}
       </div>

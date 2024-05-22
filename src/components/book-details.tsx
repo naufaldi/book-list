@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-
 import { fetchBookId } from '@/api/book';
 import Button from './common/button';
 import { formatDate } from '@/utils/date';
@@ -9,37 +8,43 @@ import { Book } from '@/interfaces/book';
 
 const BookDetail: React.FC = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  // Initialize favorites from localStorage
   useEffect(() => {
     const storedFavorites = localStorage.getItem('favorites');
     if (storedFavorites) {
       setFavorites(JSON.parse(storedFavorites));
+    } else {
+      localStorage.setItem('favorites', JSON.stringify([]));
     }
+    setIsInitialized(true);
   }, []);
 
-  const {
-    data: book,
-    isLoading,
-    error,
-  } = useQuery<Book>({
+  const { data: book, isLoading, error } = useQuery<Book>({
     queryKey: ['book-id', id],
     queryFn: () => fetchBookId(id!),
     enabled: !!id,
   });
 
   useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }, [favorites]);
+    if (isInitialized) {
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+
+    }
+  }, [favorites, isInitialized]);
 
   if (isLoading) return <div>Loading...</div>;
   if (error || !book) return <div>Error loading book details</div>;
+
   const handleError = (
     event: React.SyntheticEvent<HTMLImageElement, Event>
   ) => {
     event.currentTarget.src = 'https://placehold.co/400x500?text=Placeholder';
   };
+
   const toggleFavorite = (id: number) => {
     setFavorites((prevFavorites) =>
       prevFavorites.includes(id)
@@ -49,9 +54,10 @@ const BookDetail: React.FC = () => {
   };
 
   const formattedDate = book?.publicationDate ? formatDate(book.publicationDate) : 'Unknown';
+
   return (
     <div className="book-detail">
-      <div className="breadcumb">
+      <div className="breadcrumb">
         <h5 onClick={() => navigate('/')}>Home</h5> {' > '}
         <p>{book.title}</p>
       </div>
@@ -74,7 +80,6 @@ const BookDetail: React.FC = () => {
         <div className="book-card__footer">
           <div className="footer-button">
             <p className="book-card__date">{formattedDate}</p>
-
           </div>
         </div>
       </div>
