@@ -41,15 +41,19 @@ const BookList: React.FC = () => {
   // Callback to initialize books from localStorage or API
   const initializeBooks = useCallback(() => {
     const storedBooks = localStorage.getItem('localBooks');
-    if (storedBooks && JSON.parse(storedBooks).length > 0) {
-      setLocalBooks(JSON.parse(storedBooks));
-      console.log('Using data from localStorage');
-    } else if (apiBooks.length > 0) {
-      console.log('Using data from API');
+    if (storedBooks) {
+      const parsedStoredBooks = JSON.parse(storedBooks);
+      const combinedBooks = [
+        ...parsedStoredBooks,
+        ...apiBooks.filter(
+          (apiBook) => !parsedStoredBooks.some((localBook: Book) => localBook.id === apiBook.id)
+        ),
+      ];
+      setLocalBooks(combinedBooks);
+    } else {
       setLocalBooks(apiBooks);
       localStorage.setItem('localBooks', JSON.stringify(apiBooks));
     }
-    console.log('use effect work storedBooks', apiBooks);
   }, [apiBooks]);
 
   // Initialize books only when apiBooks has data

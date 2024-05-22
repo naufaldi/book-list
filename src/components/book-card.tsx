@@ -66,7 +66,7 @@ const BookCard: React.FC<BookCardProps> = ({
             </Button>
           </div>
         </div>
-        <Button className="button--success" onClick={onDetail}>
+        <Button className="button--success" disabled={!isApiBook} onClick={onDetail}>
           Details
         </Button>
       </div>

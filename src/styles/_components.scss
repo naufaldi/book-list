@@ -113,3 +113,21 @@ form {
     width: 100%;
   }
 }
+
+// Book Details
+
+.book-detail{
+  max-width: 680px;
+  margin: 24px auto;
+}
+.breadcumb{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 18px;
+  h5{
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
