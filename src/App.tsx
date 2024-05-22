@@ -4,6 +4,7 @@ import BookList from './components/book-list';
 import BookDetail from './components/book-details';
 
 import './styles/global.scss';
+import { ToastContainer } from 'react-toastify';
 
 const App: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const App: React.FC = () => {
         <Route path="/" element={<BookList />} />
         <Route path="/book/:id" element={<BookDetail />} />
       </Routes>
+      <ToastContainer />
     </div>
   );
 };

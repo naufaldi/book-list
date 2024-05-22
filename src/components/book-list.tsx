@@ -8,6 +8,7 @@ import Button from './common/button';
 import { fetchBooks } from '../api/book';
 import { Book, InputBook } from '@/interfaces/book';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const BookList: React.FC = () => {
   const navigate = useNavigate();
@@ -132,6 +133,15 @@ const BookList: React.FC = () => {
 
     setLocalBooks(updatedBooks);
     closeModal();
+    if (editBook) {
+      toast.success("Book successfully edited!", {
+        position: "top-center"
+      });
+    } else {
+      toast.success("Book successfully added!", {
+        position: "top-center"
+      });
+    }
   };
 
   const handleDeleteBook = (id: number) => {
