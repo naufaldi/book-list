@@ -1,21 +1,8 @@
 import React, { useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
-
 import { FileInput, TextInput, Textarea } from './common/form-group';
 import Button from './common/button';
-
-interface InputBook {
-  title: string;
-  author: string;
-  description: string;
-  cover: FileList | undefined;
-  publicationDate: string;
-}
-
-interface BookFormProps {
-  book: InputBook | null;
-  onSave: (data: InputBook) => void;
-}
+import { BookFormProps, InputBook } from '@/interfaces/book';
 
 const BookForm: React.FC<BookFormProps> = ({ book, onSave }) => {
   const { register, handleSubmit, reset, setValue } = useForm<InputBook>({
@@ -38,9 +25,7 @@ const BookForm: React.FC<BookFormProps> = ({ book, onSave }) => {
   }, [book, setValue]);
 
   const onSubmit: SubmitHandler<InputBook> = async (data) => {
-    console.log('Form data before processing:', data);
-
-    if (data.cover && data.cover.length > 0) {
+    if (data.cover && data.cover instanceof FileList && data.cover.length > 0) {
       const file = data.cover[0];
       const reader = new FileReader();
 
@@ -50,16 +35,12 @@ const BookForm: React.FC<BookFormProps> = ({ book, onSave }) => {
           ...data,
           cover: base64String, // Replace the FileList with the Base64 string
         };
-        localStorage.setItem('bookForm', JSON.stringify(formData));
-        console.log('Form data after processing:', formData);
         onSave(formData);
         reset();
       };
 
       reader.readAsDataURL(file);
     } else {
-      localStorage.setItem('bookForm', JSON.stringify(data));
-      console.log('Form data without cover:', data);
       onSave(data);
       reset();
     }

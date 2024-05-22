@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-
-import { fetchBooks } from '../api/book';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import BookCard from './book-card';
 import Pagination from './pagination';
-import { Book } from '@/interfaces/book';
 import Modal from './common/modal';
 import BookForm from './book-form';
 import Button from './common/button';
+import { fetchBooks } from '../api/book';
+import { Book, InputBook } from '@/interfaces/book';
+import { useNavigate } from 'react-router-dom';
 
 const BookList: React.FC = () => {
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [favorites, setFavorites] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,21 +24,48 @@ const BookList: React.FC = () => {
     data: apiBooks = [],
     isLoading,
     error,
-  } = useQuery({ queryKey: ['book-list'], queryFn: () => fetchBooks() });
+  } = useQuery({
+    queryKey: ['book-list'],
+    queryFn: () => fetchBooks(),
+  });
 
+  // Initialize favorites from localStorage
   useEffect(() => {
     const storedFavorites = localStorage.getItem('favorites');
     if (storedFavorites) {
       setFavorites(JSON.parse(storedFavorites));
     }
+    console.log('use effect work storedFavorites');
   }, []);
 
-  useEffect(() => {
-    if (favorites.length > 0) {
-      localStorage.setItem('favorites', JSON.stringify(favorites));
+  // Callback to initialize books from localStorage or API
+  const initializeBooks = useCallback(() => {
+    const storedBooks = localStorage.getItem('localBooks');
+    if (storedBooks && JSON.parse(storedBooks).length > 0) {
+      setLocalBooks(JSON.parse(storedBooks));
+      console.log('Using data from localStorage');
+    } else if (apiBooks.length > 0) {
+      console.log('Using data from API');
+      setLocalBooks(apiBooks);
+      localStorage.setItem('localBooks', JSON.stringify(apiBooks));
     }
+    console.log('use effect work storedBooks', apiBooks);
+  }, [apiBooks]);
+
+  // Initialize books only when apiBooks has data
+  useEffect(() => {
+    if (apiBooks.length > 0) {
+      initializeBooks();
+    }
+    console.log('use effect work apiBooks');
+  }, [apiBooks, initializeBooks]);
+
+  // Update localStorage when favorites change
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
   }, [favorites]);
 
+  // Update localStorage when localBooks change
   useEffect(() => {
     localStorage.setItem('localBooks', JSON.stringify(localBooks));
   }, [localBooks]);
@@ -55,20 +82,98 @@ const BookList: React.FC = () => {
   };
 
   const openModal = (book: Book | null = null) => {
+    setEditBook(book);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
+    setEditBook(null);
     setIsModalOpen(false);
   };
-  const handleSaveBook = (book: Book) => {
-    closeModal();
+  const handleCardClick = (id: number) => {
+    navigate(`/book/${id}`);
   };
-  const allBooks = [...apiBooks, ...localBooks];
+  const handleSaveBook = (inputBook: InputBook) => {
+    if (
+      inputBook.cover &&
+      inputBook.cover instanceof FileList &&
+      inputBook.cover.length > 0
+    ) {
+      const file = inputBook.cover[0];
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const id = editBook
+          ? editBook.id
+          : Math.max(...localBooks.map((b) => b.id), 0) + 1;
+
+        const book: Book = {
+          id,
+          title: inputBook.title,
+          author: inputBook.author,
+          description: inputBook.description,
+          cover: base64String,
+          publicationDate: inputBook.publicationDate,
+        };
+
+        const updatedBooks = editBook
+          ? localBooks.map((b) => (b.id === book.id ? book : b))
+          : [...localBooks, book];
+
+        setLocalBooks(updatedBooks);
+        closeModal();
+      };
+
+      reader.readAsDataURL(file);
+    } else {
+      const id = editBook
+        ? editBook.id
+        : Math.max(...localBooks.map((b) => b.id), 0) + 1;
+
+      const book: Book = {
+        id,
+        title: inputBook.title,
+        author: inputBook.author,
+        description: inputBook.description,
+        cover:
+          typeof inputBook.cover === 'string'
+            ? inputBook.cover
+            : editBook?.cover || '',
+        publicationDate: inputBook.publicationDate,
+      };
+
+      const updatedBooks = editBook
+        ? localBooks.map((b) => (b.id === book.id ? book : b))
+        : [...localBooks, book];
+
+      setLocalBooks(updatedBooks);
+      closeModal();
+    }
+  };
+  const handleDeleteBook = (id: number) => {
+    setLocalBooks(localBooks.filter((book) => book.id !== id));
+  };
+
+  const handleEditBook = (book: Book) => {
+    openModal(book);
+  };
+
+  const convertBookToInputBook = (book: Book): InputBook => ({
+    title: book.title,
+    author: book.author,
+    description: book.description,
+    cover: undefined,
+    publicationDate: book.publicationDate,
+  });
+  const apiBookIds = apiBooks.map((book) => book.id);
+
+  const allBooks = localBooks;
   const paginatedBooks = allBooks.slice(
     (currentPage - 1) * BOOKS_PERPAGE,
     currentPage * BOOKS_PERPAGE
   );
+
   return (
     <>
       <Button
@@ -78,7 +183,10 @@ const BookList: React.FC = () => {
         Add Book
       </Button>
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <BookForm book={editBook} onSave={handleSaveBook} />
+        <BookForm
+          book={editBook ? convertBookToInputBook(editBook) : null}
+          onSave={handleSaveBook}
+        />
       </Modal>
       <div className="book-list">
         {paginatedBooks.map((book) => (
@@ -87,6 +195,10 @@ const BookList: React.FC = () => {
             book={book}
             isFavorite={favorites.includes(book.id)}
             toggleFavorite={toggleFavorite}
+            isApiBook={apiBookIds.includes(book.id)}
+            onEdit={() => handleEditBook(book)}
+            onDelete={() => handleDeleteBook(book.id)}
+            onDetail={() => handleCardClick(book.id)}
           />
         ))}
       </div>

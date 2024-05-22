@@ -10,6 +10,11 @@ export interface InputBook {
   title: string;
   author: string;
   description: string;
-  cover: FileList | undefined;
+  cover: FileList | string | undefined;
   publicationDate: string;
+}
+
+export interface BookFormProps {
+  book: InputBook | null;
+  onSave: (data: InputBook) => void;
 }

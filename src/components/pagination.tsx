@@ -20,13 +20,21 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div className="pagination">
-      <Button onClick={() => handlePageChange(currentPage - 1)}>
+      <Button
+        className="button--primary"
+        onClick={() => handlePageChange(currentPage - 1)}
+      >
         Previous
       </Button>
       <span>
         {currentPage} / {totalPages}
       </span>
-      <Button onClick={() => handlePageChange(currentPage + 1)}>Next</Button>
+      <Button
+        className="button--primary"
+        onClick={() => handlePageChange(currentPage + 1)}
+      >
+        Next
+      </Button>
     </div>
   );
 };
