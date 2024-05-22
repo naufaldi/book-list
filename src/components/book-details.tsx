@@ -5,6 +5,7 @@ import { fetchBookId } from '@/api/book';
 import Button from './common/button';
 import { formatDate } from '@/utils/date';
 import { Book } from '@/interfaces/book';
+import Spinner from './common/loading/spinner';
 
 const BookDetail: React.FC = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
@@ -36,7 +37,7 @@ const BookDetail: React.FC = () => {
     }
   }, [favorites, isInitialized]);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <Spinner />;
   if (error || !book) return <div>Error loading book details</div>;
 
   const handleError = (

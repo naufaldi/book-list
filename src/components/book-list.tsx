@@ -9,6 +9,7 @@ import { fetchBooks } from '../api/book';
 import { Book, InputBook } from '@/interfaces/book';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import Spinner from './common/loading/spinner';
 
 const BookList: React.FC = () => {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ const BookList: React.FC = () => {
     }
   }, [localBooks, isInitialized]);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <Spinner />;
   if (error) return <div>Error loading books</div>;
 
   const toggleFavorite = (id: number) => {
