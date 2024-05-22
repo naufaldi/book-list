@@ -1,0 +1,13 @@
+.confirm-delete {
+  text-align: center;
+  padding: 20px;
+  h2{
+    margin-bottom: 24px;
+  }
+  &__actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    
+  }
+}

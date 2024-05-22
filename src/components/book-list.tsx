@@ -10,6 +10,7 @@ import { Book, InputBook } from '@/interfaces/book';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Spinner from './common/loading/spinner';
+import ConfirmDelete from './common/confirm-delete/confirm-delete';
 
 const BookList: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const BookList: React.FC = () => {
   const [localBooks, setLocalBooks] = useState<Book[]>([]);
   const [editBook, setEditBook] = useState<Book | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState<number | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const BOOKS_PERPAGE = 5;
@@ -145,11 +148,25 @@ const BookList: React.FC = () => {
     }
   };
 
-  const handleDeleteBook = (id: number) => {
-    setLocalBooks(localBooks.filter((book) => book.id !== id));
-    toast.success("Book successfully delete!", {
-      position: "top-center"
-    });
+  const handleDeleteBook = () => {
+    if (bookToDelete !== null) {
+      setLocalBooks(localBooks.filter((book) => book.id !== bookToDelete));
+      toast.success("Book successfully deleted!", {
+        position: "top-center"
+      });
+      setIsDeleteModalOpen(false);
+      setBookToDelete(null);
+    }
+  };
+
+  const openDeleteModal = (id: number) => {
+    setBookToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setBookToDelete(null);
+    setIsDeleteModalOpen(false);
   };
 
   const handleEditBook = (book: Book) => {
@@ -185,6 +202,12 @@ const BookList: React.FC = () => {
           onSave={handleSaveBook}
         />
       </Modal>
+      <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal}>
+        <ConfirmDelete
+          onConfirm={handleDeleteBook}
+          onCancel={closeDeleteModal}
+        />
+      </Modal>
       <div className="book-list">
         {paginatedBooks.map((book) => (
           <BookCard
@@ -193,7 +216,7 @@ const BookList: React.FC = () => {
             isFavorite={favorites.includes(book.id)}
             toggleFavorite={toggleFavorite}
             onEdit={() => handleEditBook(book)}
-            onDelete={() => handleDeleteBook(book.id)}
+            onDelete={() => openDeleteModal(book.id)}
             onDetail={() => handleCardClick(book.id)}
             isApiBook={apiBookIds.includes(book.id)}
           />
