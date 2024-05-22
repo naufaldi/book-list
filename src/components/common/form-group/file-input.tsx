@@ -1,4 +1,3 @@
-import React from 'react';
 import { Path, UseFormRegister } from 'react-hook-form';
 import './styles.scss';
 import { InputBook } from '@/interfaces/book';

@@ -9,11 +9,15 @@
 .book-list {
   display: grid;
   align-items: flex-start;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
+  padding: 12px;
   gap: 12px;
   min-height: 80vh;
   margin-bottom: 32px;
   margin-top: 32px;
+  @media screen and (min-width: 520px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .book-card {
@@ -119,6 +123,7 @@ form {
 .book-detail{
   max-width: 680px;
   margin: 24px auto;
+  padding: 12px;
 }
 .breadcrumb{
   display: flex;

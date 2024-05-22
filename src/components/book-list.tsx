@@ -31,7 +31,7 @@ const BookList: React.FC = () => {
     queryFn: fetchBooks,
   });
 
-  // Initialize favorites from localStorage
+
   useEffect(() => {
     const storedFavorites = localStorage.getItem('favorites');
     if (storedFavorites) {
@@ -43,7 +43,7 @@ const BookList: React.FC = () => {
     }
   }, []);
 
-  // Callback to initialize books from localStorage or API
+
   const initializeBooks = useCallback(() => {
     const storedBooks = localStorage.getItem('localBooks');
     if (storedBooks) {
@@ -64,7 +64,7 @@ const BookList: React.FC = () => {
     setIsInitialized(true);
   }, [apiBooks]);
 
-  // Initialize books only when apiBooks has data
+
   useEffect(() => {
     if (apiBooks.length > 0) {
       initializeBooks();
@@ -72,7 +72,7 @@ const BookList: React.FC = () => {
     console.log('use effect work apiBooks');
   }, [apiBooks, initializeBooks]);
 
-  // Update localStorage when favorites change
+
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem('favorites', JSON.stringify(favorites));
@@ -80,7 +80,7 @@ const BookList: React.FC = () => {
     }
   }, [favorites, isInitialized]);
 
-  // Update localStorage when localBooks change
+
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem('localBooks', JSON.stringify(localBooks));
@@ -146,6 +146,9 @@ const BookList: React.FC = () => {
 
   const handleDeleteBook = (id: number) => {
     setLocalBooks(localBooks.filter((book) => book.id !== id));
+    toast.success("Book successfully delete!", {
+      position: "top-center"
+    });
   };
 
   const handleEditBook = (book: Book) => {
